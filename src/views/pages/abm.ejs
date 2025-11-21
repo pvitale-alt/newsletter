@@ -100,7 +100,7 @@
                                 <input type="file" id="alcanceSectionImage" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;" onchange="previewAlcanceSectionImage(this)">
                                 <input type="hidden" id="alcanceSectionImageData" value="<%= funcionalidad && funcionalidad.alcance_imagen ? funcionalidad.alcance_imagen : '' %>">
                                 <div id="alcanceSectionImagePreview" style="margin-top: 12px; <%= funcionalidad && funcionalidad.alcance_imagen ? '' : 'display: none;' %>">
-                                    <img id="alcanceSectionImagePreviewImg" src="<%= funcionalidad && funcionalidad.alcance_imagen ? funcionalidad.alcance_imagen : '' %>" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid var(--border-color);" />
+                                    <img id="alcanceSectionImagePreviewImg" src="<%= funcionalidad && funcionalidad.alcance_imagen ? funcionalidad.alcance_imagen : '' %>" style="max-width: 100%; height: auto; max-height: 400px; border-radius: 8px; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" />
                                     <button type="button" onclick="eliminarAlcanceSectionImage()" style="margin-top: 8px; padding: 6px 12px; background: #d93025; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">Eliminar imagen</button>
                                 </div>
                             </div>
@@ -223,7 +223,48 @@
         }).filter(item => item !== null);
         
         // Obtener imagen de sección Alcance
-        const alcanceImagen = document.getElementById('alcanceSectionImageData') ? document.getElementById('alcanceSectionImageData').value : '';
+        let alcanceImagen = document.getElementById('alcanceSectionImageData') ? document.getElementById('alcanceSectionImageData').value : '';
+        
+        // Si hay una imagen pendiente de subir, subirla ahora antes de guardar
+        // ⚠️ IMPORTANTE: Esta es una Advanced Operation de Vercel Blob (cuenta en el límite mensual)
+        if (window.pendingAlcanceImage) {
+            // Protección: evitar subidas duplicadas si ya se está procesando
+            if (window.uploadingImage) {
+                console.warn('[BLOB] Ya hay una subida en proceso, esperando...');
+                return; // Evitar subidas duplicadas
+            }
+            
+            window.uploadingImage = true; // Marcar como en proceso
+            console.log('[BLOB] Iniciando subida de imagen (Advanced Operation)');
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', window.pendingAlcanceImage);
+                
+                const uploadResponse = await fetch('/api/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const uploadResult = await uploadResponse.json();
+                
+                if (uploadResult.success && uploadResult.url) {
+                    alcanceImagen = uploadResult.url;
+                    console.log('[BLOB] ✅ Imagen subida exitosamente:', uploadResult.url);
+                    // Limpiar la imagen pendiente
+                    window.pendingAlcanceImage = null;
+                } else {
+                    throw new Error(uploadResult.error || 'Error al subir la imagen');
+                }
+            } catch (error) {
+                console.error('[BLOB] ❌ Error al subir imagen:', error);
+                alert('Error al subir la imagen: ' + error.message);
+                window.uploadingImage = false; // Liberar el flag en caso de error
+                return; // Detener el guardado si falla la subida
+            } finally {
+                window.uploadingImage = false; // Liberar el flag
+            }
+        }
         
         // Obtener tags de ventajas
         const ventajasItems = Array.from(document.querySelectorAll('#ventajasContainer .tag-edit-item')).map(item => {
@@ -348,18 +389,38 @@
     
     function previewAlcanceSectionImage(input) {
         if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validar tamaño (5MB máximo)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('La imagen no puede ser mayor a 5MB');
+                input.value = '';
+                return;
+            }
+            
+            // Mostrar preview local (NO subir todavía)
+            const previewDiv = document.getElementById('alcanceSectionImagePreview');
+            const previewImg = document.getElementById('alcanceSectionImagePreviewImg');
+            const hiddenInput = document.getElementById('alcanceSectionImageData');
+            
+            if (!previewDiv || !previewImg || !hiddenInput) return;
+            
+            // Preview temporal con base64 (solo local, no se sube)
             const reader = new FileReader();
             reader.onload = function(e) {
-                const previewDiv = document.getElementById('alcanceSectionImagePreview');
-                const previewImg = document.getElementById('alcanceSectionImagePreviewImg');
-                const hiddenInput = document.getElementById('alcanceSectionImageData');
-                if (previewDiv && previewImg && hiddenInput) {
-                    previewDiv.style.display = 'block';
-                    previewImg.src = e.target.result;
-                    hiddenInput.value = e.target.result;
-                }
+                previewDiv.style.display = 'block';
+                previewImg.src = e.target.result;
+                previewImg.style.maxWidth = '100%';
+                previewImg.style.height = 'auto';
+                previewImg.style.maxHeight = '400px';
             };
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(file);
+            
+            // Guardar referencia al archivo para subirlo al guardar
+            if (!window.pendingAlcanceImage) {
+                window.pendingAlcanceImage = null;
+            }
+            window.pendingAlcanceImage = file;
         }
     }
     
@@ -372,6 +433,8 @@
         if (previewImg) previewImg.src = '';
         if (hiddenInput) hiddenInput.value = '';
         if (fileInput) fileInput.value = '';
+        // Limpiar imagen pendiente
+        window.pendingAlcanceImage = null;
     }
     
     // Implementar pegado sin formato en todos los textareas

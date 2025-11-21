@@ -1552,6 +1552,14 @@ h3 {
 /* Section Groups */
 .section-group {
     margin-bottom: 48px;
+    padding-top: 32px;
+    border-top: 1px solid #e8eaed;
+}
+
+.section-group:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
 }
 
 .section-title {
@@ -1561,6 +1569,8 @@ h3 {
     color: var(--text-primary);
     text-transform: lowercase;
     letter-spacing: 0;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
 }
 
 .section-title::first-letter {

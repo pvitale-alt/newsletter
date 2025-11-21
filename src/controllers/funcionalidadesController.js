@@ -9,6 +9,7 @@ class FuncionalidadesController {
      */
     static async mostrarCatalogo(req, res) {
         try {
+            console.log('[CONTROLLER] mostrarCatalogo - NO debería ejecutar ninguna operación de Blob');
             const { section, search } = req.query;
             
             const filters = {
@@ -58,6 +59,7 @@ class FuncionalidadesController {
      */
     static async mostrarNewsletter(req, res) {
         try {
+            console.log('[CONTROLLER] mostrarNewsletter - NO debería ejecutar ninguna operación de Blob');
             const { search } = req.query;
             
             const filters = {
@@ -89,6 +91,7 @@ class FuncionalidadesController {
      */
     static async mostrarProximamente(req, res) {
         try {
+            console.log('[CONTROLLER] mostrarProximamente - NO debería ejecutar ninguna operación de Blob');
             const { search } = req.query;
             
             const filters = {
@@ -418,7 +421,16 @@ class FuncionalidadesController {
     static async verificarAdmin(req, res) {
         try {
             const { password } = req.body;
-            const adminPassword = process.env.ADMIN_PASSWORD || 'MPmercap767';
+            const adminPassword = process.env.ADMIN_PASSWORD;
+            
+            // Validar que la variable de entorno esté configurada
+            if (!adminPassword) {
+                console.error('⚠️ ADMIN_PASSWORD no está configurada en las variables de entorno');
+                return res.status(500).json({ 
+                    success: false, 
+                    error: 'Configuración de seguridad no disponible' 
+                });
+            }
             
             if (password === adminPassword) {
                 // Establecer cookie de sesión admin

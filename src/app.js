@@ -10,8 +10,12 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware para archivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
+// Middleware para archivos estáticos con caché optimizado
+app.use(express.static(path.join(__dirname, 'public'), {
+    maxAge: 31536000000, // 1 año en milisegundos
+    etag: true,
+    lastModified: true
+}));
 
 // Middleware para parsear JSON y URL encoded
 app.use(express.json());
@@ -26,6 +30,13 @@ app.get('/', (req, res) => {
 
 app.use('/', require('./routes/funcionalidadesRoutes'));
 app.use('/', require('./routes/suscripcionesRoutes'));
+
+// ⚠️ IMPORTANTE: blobRoutes solo se carga cuando se necesita, no hace nada al importarse
+// Las Advanced Operations solo se ejecutan cuando se llama explícitamente a /api/upload-image
+console.log('[APP] Cargando blobRoutes...');
+const blobRoutes = require('./routes/blobRoutes');
+console.log('[APP] blobRoutes cargado (sin ejecutar código de @vercel/blob)');
+app.use('/', blobRoutes);
 
 // Ruta 404
 app.use((req, res) => {
