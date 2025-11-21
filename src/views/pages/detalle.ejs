@@ -1,1 +1,979 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= funcionalidad && funcionalidad.title ? funcionalidad.title : 'Nueva Funcionalidad' %> - Newsletter Unitrade</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body>
+    <%- include('../partials/header', { activeMenu: '', adminSession: typeof adminSession !== 'undefined' ? adminSession : false }) %>
+    
+    <main class="main-content">
+        <% if ((typeof editMode !== 'undefined' && editMode) || (typeof isNew !== 'undefined' && isNew)) { %>
+        <!-- MODO EDICIÓN -->
+        <div class="page-container" style="max-width: 1400px; margin: 0 auto; padding: 40px;">
+            <div class="page-header">
+                <h1 class="page-title"><%= isNew ? 'Nueva' : 'Editar' %> Funcionalidad</h1>
+                </div>
+            
+            <div class="abm-container">
+                <div class="abm-form-section">
+                    <form id="detalleForm" onsubmit="guardarEdicion(event)">
+                        <input type="hidden" id="funcionalidadId" value="<%= funcionalidad && funcionalidad.id ? funcionalidad.id : '' %>">
+                        
+                        <div class="form-group">
+                            <label for="title">Título *</label>
+                            <input type="text" id="title" name="title" required value="<%= funcionalidad && funcionalidad.title ? funcionalidad.title : '' %>">
+                    </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Descripción</label>
+                            <textarea id="editDescription" name="description" rows="5" lang="es" spellcheck="true" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;"><%= funcionalidad && funcionalidad.description ? funcionalidad.description : '' %></textarea>
+                    </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label for="section">Sección *</label>
+                                <select id="section" name="section" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Operatorias" <%= funcionalidad && funcionalidad.section === 'Operatorias' ? 'selected' : '' %>>Operatorias</option>
+                                    <option value="Backoffice" <%= funcionalidad && funcionalidad.section === 'Backoffice' ? 'selected' : '' %>>Backoffice</option>
+                                    <option value="Market Data" <%= funcionalidad && funcionalidad.section === 'Market Data' ? 'selected' : '' %>>Market Data</option>
+                                    <option value="Valuacion y Contabilidad" <%= funcionalidad && funcionalidad.section === 'Valuacion y Contabilidad' ? 'selected' : '' %>>Valuación y Contabilidad</option>
+                                    <option value="Reportes/Interfaces" <%= funcionalidad && funcionalidad.section === 'Reportes/Interfaces' ? 'selected' : '' %>>Reportes/Interfaces</option>
+                                </select>
+                    </div>
+                            
+                            <div class="form-group">
+                                <label for="type">Tipo *</label>
+                                <select id="type" name="type" required>
+                                    <option value="catalogo" <%= funcionalidad && funcionalidad.type === 'catalogo' ? 'selected' : '' %>>Catálogo</option>
+                                    <option value="newsletter" <%= funcionalidad && funcionalidad.type === 'newsletter' ? 'selected' : '' %>>Newsletter</option>
+                                    <option value="proximamente" <%= funcionalidad && funcionalidad.type === 'proximamente' ? 'selected' : '' %>>Próximamente</option>
+                                </select>
+                </div>
+            </div>
+                        
+                        <div class="form-group">
+                            <label for="icon">Ícono</label>
+                            <div class="icon-selector-container">
+                                <div class="icon-preview-container">
+                                    <div id="iconPreview" class="icon-preview">
+                                        <% if (funcionalidad && funcionalidad.icon) { %>
+                        <% if (funcionalidad.icon.startsWith('data:image')) { %>
+                                            <img src="<%= funcionalidad.icon %>" style="width: 48px; height: 48px; object-fit: contain;" alt="Icono">
+                                            <% } else if (funcionalidad.icon.startsWith('material-icons:')) { %>
+                                            <% const materialIconName = funcionalidad.icon.split(':')[1]; %>
+                                            <span class="material-icons" style="font-size: 48px; color: var(--primary-color);"><%= materialIconName %></span>
+                        <% } else { %>
+                                            <span style="font-size: 48px;"><%= funcionalidad.icon %></span>
+                        <% } %>
+                                        <% } else { %>
+                                        <span class="material-icons" style="font-size: 48px; color: #9aa0a6;">image</span>
+                    <% } %>
+            </div>
+                                    <button type="button" class="btn-icon-selector" onclick="toggleIconSelector()">Seleccionar ícono</button>
+                                </div>
+                                <input type="hidden" id="icon" name="icon" value="<%= funcionalidad && funcionalidad.icon ? funcionalidad.icon : '' %>">
+                                
+                                <!-- Selector de Iconos -->
+                                <div id="iconSelector" class="icon-selector" style="display: none;">
+                                    <div class="icon-selector-tabs">
+                                        <button type="button" class="icon-tab active" onclick="switchIconTab('material')">Material Icons</button>
+                                        <button type="button" class="icon-tab" onclick="switchIconTab('emoji')">Emojis</button>
+                                        <button type="button" class="icon-tab" onclick="switchIconTab('url')">URL / Imagen</button>
+                    </div>
+                        
+                                    <!-- Tab Material Icons -->
+                                    <div id="iconTabMaterial" class="icon-tab-content active">
+                                        <div class="icon-search-container">
+                                            <input type="text" id="iconSearch" class="icon-search-input" placeholder="Buscar icono..." oninput="filtrarIconos(this.value)">
+                </div>
+                                        <div class="icon-grid" id="materialIconsGrid">
+                                            <!-- Los iconos se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                    
+                                    <!-- Tab Emojis -->
+                                    <div id="iconTabEmoji" class="icon-tab-content">
+                                        <div class="emoji-grid">
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🚀')">🚀</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('📊')">📊</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('💰')">💰</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('📈')">📈</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🔒')">🔒</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('⚡')">⚡</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🎯')">🎯</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('📱')">📱</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('💼')">💼</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🌐')">🌐</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🔧')">🔧</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('📋')">📋</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('✅')">✅</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('📦')">📦</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🎨')">🎨</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🔐')">🔐</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('📊')">📊</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('💡')">💡</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('⚙️')">⚙️</span>
+                                            <span class="emoji-item" onclick="seleccionarEmoji('🔔')">🔔</span>
+                                        </div>
+                    </div>
+                    
+                                    <!-- Tab URL / Imagen -->
+                                    <div id="iconTabUrl" class="icon-tab-content">
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label style="font-size: 13px; margin-bottom: 6px;">URL de imagen</label>
+                                            <input type="url" id="iconUrlInput" class="form-input" placeholder="https://ejemplo.com/imagen.png" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px;">
+                                        </div>
+                                        <div class="form-group">
+                                            <label style="font-size: 13px; margin-bottom: 6px;">O subir imagen</label>
+                                            <input type="file" id="iconFileInput" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px;" onchange="previewIconFile(this)">
+                                        </div>
+                                        <div id="iconFilePreview" style="margin-top: 12px; display: none;">
+                                            <img id="iconFilePreviewImg" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                                        </div>
+                                        <button type="button" class="button" style="width: 100%; margin-top: 12px;" onclick="aplicarIconoUrl()">Aplicar</button>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                    
+                        <div class="form-group">
+                            <label>Alcance</label>
+                        <div id="alcanceContainer" style="margin-bottom: 12px;">
+                            <% 
+                            let alcanceEdit = [];
+                                if (funcionalidad && funcionalidad.alcance) {
+                    try {
+                        if (typeof funcionalidad.alcance === 'string') {
+                            const parsed = JSON.parse(funcionalidad.alcance || '[]');
+                                        alcanceEdit = Array.isArray(parsed) ? parsed : [];
+                        } else if (Array.isArray(funcionalidad.alcance)) {
+                                        alcanceEdit = funcionalidad.alcance;
+                        }
+                    } catch (e) {
+                                    alcanceEdit = [];
+                                }
+                            }
+                            alcanceEdit.forEach((item, index) => {
+                            %>
+                            <div class="tag-edit-item" style="margin-bottom: 12px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--hover-bg);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-weight: 500; font-size: 13px;">Tag <%= index + 1 %></span>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                                            <input type="checkbox" class="tag-visible" <%= item.visible !== false ? 'checked' : '' %> style="cursor: pointer;">
+                                            <span>Mostrar</span>
+                                        </label>
+                                        <button type="button" onclick="eliminarTagAlcance(this)" class="btn-eliminar-tag">Eliminar</button>
+                                    </div>
+                                </div>
+                                <input type="text" class="tag-titulo-alcance" placeholder="Título (opcional)" value="<%= item.titulo || '' %>" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;">
+                                <textarea class="tag-descripcion" placeholder="Descripción" rows="2" lang="es" spellcheck="true" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;"><%= item.descripcion || item.description || '' %></textarea>
+                            </div>
+                            <% }); %>
+                    </div>
+                            <button type="button" onclick="agregarTagAlcance()" class="btn" style="width: 100%; margin-bottom: 16px;">+ Agregar Tag de Alcance</button>
+                            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: var(--text-primary);">Imagen de Alcance (opcional)</label>
+                                <input type="file" id="alcanceSectionImage" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;" onchange="previewAlcanceSectionImage(this)">
+                                <input type="hidden" id="alcanceSectionImageData" value="<%= funcionalidad && funcionalidad.alcance_imagen ? funcionalidad.alcance_imagen : '' %>">
+                                <div id="alcanceSectionImagePreview" style="margin-top: 12px; <%= funcionalidad && funcionalidad.alcance_imagen ? '' : 'display: none;' %>">
+                                    <img id="alcanceSectionImagePreviewImg" src="<%= funcionalidad && funcionalidad.alcance_imagen ? funcionalidad.alcance_imagen : '' %>" style="max-width: 100%; height: auto; max-height: 400px; border-radius: 8px; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" />
+                                    <button type="button" onclick="eliminarAlcanceSectionImage()" style="margin-top: 8px; padding: 6px 12px; background: #d93025; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">Eliminar imagen</button>
+                </div>
+                            </div>
+                    </div>
+
+                        <div class="form-group">
+                            <label>Ventajas esperadas</label>
+                        <div id="ventajasContainer" style="margin-bottom: 12px;">
+                <% 
+                            let ventajasEdit = [];
+                                if (funcionalidad && funcionalidad.ventajas_esperadas) {
+                    try {
+                        if (typeof funcionalidad.ventajas_esperadas === 'string') {
+                            const parsed = JSON.parse(funcionalidad.ventajas_esperadas || '[]');
+                                        ventajasEdit = Array.isArray(parsed) ? parsed : [];
+                        } else if (Array.isArray(funcionalidad.ventajas_esperadas)) {
+                                        ventajasEdit = funcionalidad.ventajas_esperadas;
+                        }
+                    } catch (e) {
+                                    ventajasEdit = [];
+                                }
+                            }
+                            ventajasEdit.forEach((item, index) => {
+                            %>
+                            <div class="tag-edit-item" style="margin-bottom: 12px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--hover-bg);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-weight: 500; font-size: 13px;">Tag <%= index + 1 %></span>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                                            <input type="checkbox" class="tag-visible" <%= item.visible !== false ? 'checked' : '' %> style="cursor: pointer;">
+                                            <span>Mostrar</span>
+                                        </label>
+                                        <button type="button" onclick="eliminarTagVentajas(this)" class="btn-eliminar-tag">Eliminar</button>
+                                    </div>
+                                </div>
+                                <input type="text" class="tag-titulo" placeholder="Título" value="<%= item.titulo || item.title || '' %>" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; font-size: 14px;">
+                                    <textarea class="tag-descripcion" placeholder="Descripción" rows="2" lang="es" spellcheck="true" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;"><%= item.descripcion || item.description || '' %></textarea>
+                            </div>
+                            <% }); %>
+                    </div>
+                        <button type="button" onclick="agregarTagVentajas()" class="btn" style="width: 100%;">+ Agregar Tag de Ventajas</button>
+                </div>
+
+                        <div class="form-group">
+                            <label>Partes Interesadas</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 16px; background: var(--hover-bg); border-radius: 8px;">
+                <% 
+                let partes = [];
+                                if (funcionalidad && funcionalidad.partes_interesadas) {
+                    try {
+                        if (typeof funcionalidad.partes_interesadas === 'string') {
+                            const parsed = JSON.parse(funcionalidad.partes_interesadas || '[]');
+                            partes = Array.isArray(parsed) ? parsed : [];
+                        } else if (Array.isArray(funcionalidad.partes_interesadas)) {
+                            partes = funcionalidad.partes_interesadas;
+                        }
+                    } catch (e) {
+                        partes = [];
+                    }
+                }
+                            const todasPartes = ['Sistemas', 'HomeBanking', 'Backoffice', 'Contabilidad', 'Mesa de dinero', 'Impuestos'];
+                            todasPartes.forEach(parte => {
+                                    const activa = partes.includes(parte) || (Array.isArray(partes) && partes.some(p => p.toLowerCase() === parte.toLowerCase()));
+                            %>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='white'" onmouseout="this.style.background='transparent'">
+                                <input type="checkbox" class="stakeholder-checkbox" value="<%= parte %>" <%= activa ? 'checked' : '' %> style="cursor: pointer;">
+                                <span style="font-size: 14px;"><%= parte %></span>
+                            </label>
+                            <% }); %>
+                    </div>
+                </div>
+                    
+                        <div class="form-actions">
+                            <button type="submit" class="button">Guardar</button>
+                            <% if (funcionalidad && funcionalidad.id) { %>
+                            <button type="button" class="btn btn-danger" onclick="eliminarFuncionalidad('<%= funcionalidad.id %>')">Eliminar</button>
+                <% } %>
+                            <a href="<%= funcionalidad && funcionalidad.slug ? '/detalle/' + funcionalidad.slug : '/newsletter' %>" class="btn">Cancelar</a>
+            </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+                    <% } else { %>
+        <!-- MODO VISUALIZACIÓN (ONE-PAGE) -->
+        <div class="one-page-container">
+            <div class="one-page-header">
+                <div class="one-page-header-content">
+                    <% if (funcionalidad && funcionalidad.icon) { %>
+                    <div class="one-page-header-icon">
+                                <% if (funcionalidad.icon.startsWith('data:image')) { %>
+                            <img src="<%= funcionalidad.icon %>" style="width: 48px; height: 48px; object-fit: contain;" alt="Icono">
+                        <% } else if (funcionalidad.icon.startsWith('material-icons:')) { %>
+                            <% const materialIconName = funcionalidad.icon.split(':')[1]; %>
+                            <span class="material-icons" style="font-size: 48px; color: var(--primary-color);"><%= materialIconName %></span>
+                                <% } else { %>
+                            <i class="<%= funcionalidad.icon %>" style="font-size: 48px; color: var(--primary-color);"></i>
+                    <% } %>
+            </div>
+                        <% } else { %>
+                    <div class="one-page-header-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="color: #1a73e8;">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                        <% } %>
+                    <div class="one-page-header-text">
+                        <h1 class="one-page-title"><%= funcionalidad && funcionalidad.title ? funcionalidad.title : 'Sin título' %></h1>
+                        <% if (typeof adminSession !== 'undefined' && adminSession) { %>
+                        <div style="margin-top: 12px;">
+                            <a href="<%= '/detalle/' + (funcionalidad && funcionalidad.slug ? funcionalidad.slug : 'nueva') + '?edit=true' %>" class="button" style="text-decoration: none; display: inline-block;">Editar</a>
+                        </div>
+                    <% } %>
+                        </div>
+                        </div>
+                    </div>
+                    
+            <div class="one-page-content">
+                <% if (funcionalidad && funcionalidad.description) { %>
+                <div class="one-page-section">
+                    <h2 class="one-page-section-title">Descripción</h2>
+                    <div class="one-page-section-content">
+                        <p><%= funcionalidad.description %></p>
+                    </div>
+                    </div>
+                <% } %>
+                    
+                            <% 
+                let alcance = [];
+                if (funcionalidad && funcionalidad.alcance) {
+                                try {
+                                    if (typeof funcionalidad.alcance === 'string') {
+                                        const parsed = JSON.parse(funcionalidad.alcance || '[]');
+                            alcance = Array.isArray(parsed) ? parsed : [];
+                                    } else if (Array.isArray(funcionalidad.alcance)) {
+                            alcance = funcionalidad.alcance;
+                                    }
+                                } catch (e) {
+                        alcance = [];
+                    }
+                }
+                if (alcance.length > 0) {
+                %>
+                <div class="one-page-section">
+                    <h2 class="one-page-section-title">Alcance</h2>
+                    <div class="one-page-section-content">
+                        <div class="alcance-cards-grid">
+                            <% alcance.forEach((item, index) => { %>
+                            <div class="alcance-card <%= item.titulo ? 'alcance-card-with-title' : '' %>">
+                                <div class="alcance-card-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                    </svg>
+                                </div>
+                                <% if (item.titulo) { %>
+                                <h3 class="alcance-card-title"><%= item.titulo %></h3>
+                                <% } %>
+                                <div class="alcance-card-content">
+                                    <p class="alcance-card-text"><%= item.descripcion || item.description || '' %></p>
+                        </div>
+                            </div>
+                            <% }); %>
+                        </div>
+                        <% if (funcionalidad && funcionalidad.alcance_imagen) { %>
+                        <div class="alcance-section-image" style="margin-top: 32px; display: flex; justify-content: center; align-items: center;">
+                            <img src="<%= funcionalidad.alcance_imagen %>" alt="Alcance" style="max-width: 100%; height: auto; max-height: 600px; border-radius: 12px; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;" loading="lazy" decoding="async" />
+                    </div>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+                    
+                            <% 
+                let ventajas = [];
+                if (funcionalidad && funcionalidad.ventajas_esperadas) {
+                                try {
+                                    if (typeof funcionalidad.ventajas_esperadas === 'string') {
+                                        const parsed = JSON.parse(funcionalidad.ventajas_esperadas || '[]');
+                            ventajas = Array.isArray(parsed) ? parsed : [];
+                                    } else if (Array.isArray(funcionalidad.ventajas_esperadas)) {
+                            ventajas = funcionalidad.ventajas_esperadas;
+                                    }
+                                } catch (e) {
+                        ventajas = [];
+                    }
+                }
+                if (ventajas.length > 0) {
+                %>
+                <div class="one-page-section">
+                    <h2 class="one-page-section-title">Ventajas esperadas</h2>
+                    <div class="one-page-section-content">
+                        <ul class="tags-list">
+                            <% ventajas.forEach((item) => { %>
+                            <li class="tag-item">
+                                <div class="tag-item-header">
+                                    <span class="tag-item-title"><%= item.titulo || item.title || 'Sin título' %></span>
+                                </div>
+                                <div class="tag-item-description"><%= item.descripcion || item.description || '' %></div>
+                            </li>
+                            <% }); %>
+                        </ul>
+                        </div>
+                    </div>
+                <% } %>
+                    
+                            <% 
+                let partes = [];
+                if (funcionalidad && funcionalidad.partes_interesadas) {
+                                try {
+                                    if (typeof funcionalidad.partes_interesadas === 'string') {
+                                        const parsed = JSON.parse(funcionalidad.partes_interesadas || '[]');
+                            partes = Array.isArray(parsed) ? parsed : [];
+                                    } else if (Array.isArray(funcionalidad.partes_interesadas)) {
+                            partes = funcionalidad.partes_interesadas;
+                                    }
+                                } catch (e) {
+                        partes = [];
+                    }
+                }
+                if (partes.length > 0) {
+                %>
+                <div class="one-page-section">
+                    <h2 class="one-page-section-title">Partes Interesadas</h2>
+                    <div class="one-page-section-content">
+                        <ul class="stakeholders-list">
+                            <% partes.forEach((parte) => { %>
+                            <li class="stakeholder-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="checked">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                                <span><%= parte %></span>
+                            </li>
+                            <% }); %>
+                        </ul>
+                        </div>
+                    </div>
+                            <% } %>
+                    </div>
+                    
+            <!-- Información de Contacto -->
+            <div class="one-page-footer">
+                <h3 class="one-page-footer-title">Información de contacto</h3>
+                <div class="one-page-footer-content">
+                    <div class="one-page-footer-left">
+                        <div class="contact-address">
+                            <p>Maipú 116 Piso 4</p>
+                            <p>C1084 CABA</p>
+                            <p>Argentina</p>
+                        </div>
+                    </div>
+                    <div class="one-page-footer-center">
+                        <div class="contact-email">
+                            <a href="mailto:comercial@mercapsoftware.com" class="contact-link">comercial@mercapsoftware.com</a>
+                        </div>
+                    </div>
+                    <div class="one-page-footer-right">
+                        <img src="/images/Mercap-logo.png" alt="Mercap Logo" class="contact-logo">
+                    </div>
+                </div>
+            </div>
+                    </div>
+        <% } %>
+    </main>
+    
+    <%- include('../partials/footer') %>
+    
+    <script src="/js/main.js"></script>
+    <script>
+    <% if ((typeof editMode !== 'undefined' && editMode) || (typeof isNew !== 'undefined' && isNew)) { %>
+    async function guardarEdicion(event) {
+        event.preventDefault();
+        
+        const id = document.getElementById('funcionalidadId').value;
+        
+        // Obtener partes interesadas seleccionadas
+        const checkboxes = document.querySelectorAll('.stakeholder-checkbox:checked');
+        const partesInteresadas = Array.from(checkboxes).map(cb => cb.value);
+        
+        // Obtener tags de alcance (con título opcional)
+        const alcanceItems = Array.from(document.querySelectorAll('#alcanceContainer .tag-edit-item')).map(item => {
+            const titulo = item.querySelector('.tag-titulo-alcance') ? item.querySelector('.tag-titulo-alcance').value.trim() : '';
+            const descripcion = item.querySelector('.tag-descripcion').value;
+            if (descripcion || titulo) {
+                const result = { descripcion };
+                if (titulo) result.titulo = titulo;
+                return result;
+            }
+            return null;
+        }).filter(item => item !== null);
+        
+        // Obtener imagen de sección Alcance
+        let alcanceImagen = document.getElementById('alcanceSectionImageData') ? document.getElementById('alcanceSectionImageData').value : '';
+        
+        // Si hay una imagen pendiente de subir, subirla ahora antes de guardar
+        if (window.pendingAlcanceImage) {
+            if (window.uploadingImage) {
+                console.warn('[BLOB] Ya hay una subida en proceso, esperando...');
+                return;
+            }
+            
+            window.uploadingImage = true;
+            console.log('[BLOB] Iniciando subida de imagen (Advanced Operation)');
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', window.pendingAlcanceImage);
+                
+                const uploadResponse = await fetch('/api/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const uploadResult = await uploadResponse.json();
+                
+                if (uploadResult.success && uploadResult.url) {
+                    alcanceImagen = uploadResult.url;
+                    console.log('[BLOB] ✅ Imagen subida exitosamente:', uploadResult.url);
+                    window.pendingAlcanceImage = null;
+            } else {
+                    throw new Error(uploadResult.error || 'Error al subir la imagen');
+                }
+            } catch (error) {
+                console.error('[BLOB] ❌ Error al subir imagen:', error);
+                mostrarNotificacion('Error al subir la imagen: ' + error.message, 'error');
+                window.uploadingImage = false;
+            return;
+            } finally {
+                window.uploadingImage = false;
+            }
+        }
+        
+        // Obtener tags de ventajas (con visible)
+        const ventajasItems = Array.from(document.querySelectorAll('#ventajasContainer .tag-edit-item')).map(item => {
+            const titulo = item.querySelector('.tag-titulo').value;
+            const descripcion = item.querySelector('.tag-descripcion').value;
+            const visible = item.querySelector('.tag-visible') ? item.querySelector('.tag-visible').checked : true;
+            if (titulo || descripcion) {
+                return { titulo, descripcion, visible };
+            }
+            return null;
+        }).filter(item => item !== null);
+        
+        const data = {
+            title: document.getElementById('title').value,
+            description: document.getElementById('editDescription').value,
+            section: document.getElementById('section').value,
+            type: document.getElementById('type').value,
+            icon: document.getElementById('icon').value,
+            alcance: alcanceItems,
+            alcance_imagen: alcanceImagen,
+            ventajas_esperadas: ventajasItems,
+            partes_interesadas: partesInteresadas
+        };
+        
+        // Mostrar indicador de carga
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        const originalText = submitButton ? submitButton.textContent : '';
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Guardando...';
+        }
+        
+        try {
+            let response;
+            if (id) {
+                response = await fetch('/api/funcionalidades/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                response = await fetch('/api/funcionalidades', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                mostrarNotificacion('Funcionalidad guardada correctamente', 'success');
+                const slug = result.funcionalidad && result.funcionalidad.slug ? result.funcionalidad.slug : (data.title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim());
+                setTimeout(() => {
+                    window.location.href = '/detalle/' + slug;
+                }, 1000);
+        } else {
+                mostrarNotificacion('Error: ' + result.error, 'error');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalText;
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarNotificacion('Error al guardar la funcionalidad', 'error');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            }
+        }
+    }
+
+    function agregarTagAlcance() {
+        const container = document.getElementById('alcanceContainer');
+        const index = container.children.length;
+        const div = document.createElement('div');
+        div.className = 'tag-edit-item';
+        div.style.cssText = 'margin-bottom: 12px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--hover-bg);';
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 500; font-size: 13px;">Tag ${index + 1}</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                        <input type="checkbox" class="tag-visible" checked style="cursor: pointer;">
+                        <span>Mostrar</span>
+                    </label>
+                    <button type="button" onclick="eliminarTagAlcance(this)" class="btn-eliminar-tag">Eliminar</button>
+                </div>
+            </div>
+            <input type="text" class="tag-titulo-alcance" placeholder="Título (opcional)" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;">
+            <textarea class="tag-descripcion" placeholder="Descripción" rows="2" lang="es" spellcheck="true" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;"></textarea>
+        `;
+        container.appendChild(div);
+    }
+
+    function eliminarTagAlcance(btn) {
+        btn.closest('.tag-edit-item').remove();
+    }
+
+    function agregarTagVentajas() {
+        const container = document.getElementById('ventajasContainer');
+        const index = container.children.length;
+        const div = document.createElement('div');
+        div.className = 'tag-edit-item';
+        div.style.cssText = 'margin-bottom: 12px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--hover-bg);';
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 500; font-size: 13px;">Tag ${index + 1}</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;">
+                        <input type="checkbox" class="tag-visible" checked style="cursor: pointer;">
+                        <span>Mostrar</span>
+                    </label>
+                    <button type="button" onclick="eliminarTagVentajas(this)" class="btn-eliminar-tag">Eliminar</button>
+                </div>
+            </div>
+            <input type="text" class="tag-titulo" placeholder="Título" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; font-size: 14px;">
+            <textarea class="tag-descripcion" placeholder="Descripción" rows="2" lang="es" spellcheck="true" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; font-family: 'Google Sans', 'Roboto', sans-serif;"></textarea>
+        `;
+        container.appendChild(div);
+    }
+
+    function eliminarTagVentajas(btn) {
+        btn.closest('.tag-edit-item').remove();
+    }
+
+    function previewAlcanceSectionImage(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            if (file.size > 5 * 1024 * 1024) {
+                mostrarNotificacion('La imagen no puede ser mayor a 5MB', 'error');
+                input.value = '';
+                return;
+            }
+            
+            const previewDiv = document.getElementById('alcanceSectionImagePreview');
+            const previewImg = document.getElementById('alcanceSectionImagePreviewImg');
+            const hiddenInput = document.getElementById('alcanceSectionImageData');
+            
+            if (!previewDiv || !previewImg || !hiddenInput) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewDiv.style.display = 'block';
+                previewImg.src = e.target.result;
+                previewImg.style.maxWidth = '100%';
+                previewImg.style.height = 'auto';
+                previewImg.style.maxHeight = '400px';
+            };
+            reader.readAsDataURL(file);
+            
+            if (!window.pendingAlcanceImage) {
+                window.pendingAlcanceImage = null;
+            }
+            window.pendingAlcanceImage = file;
+        }
+    }
+    
+    function eliminarAlcanceSectionImage() {
+        const previewDiv = document.getElementById('alcanceSectionImagePreview');
+        const previewImg = document.getElementById('alcanceSectionImagePreviewImg');
+        const hiddenInput = document.getElementById('alcanceSectionImageData');
+        const fileInput = document.getElementById('alcanceSectionImage');
+        if (previewDiv) previewDiv.style.display = 'none';
+        if (previewImg) previewImg.src = '';
+        if (hiddenInput) hiddenInput.value = '';
+        if (fileInput) fileInput.value = '';
+        window.pendingAlcanceImage = null;
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                const plainText = text.replace(/\r\n/g, ' ').replace(/\n/g, ' ').replace(/\r/g, ' ').replace(/\s+/g, ' ').trim();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const value = this.value;
+                this.value = value.substring(0, start) + plainText + value.substring(end);
+                this.selectionStart = this.selectionEnd = start + plainText.length;
+            });
+        });
+        
+        // Cargar Material Icons
+        cargarMaterialIcons();
+    });
+    
+    // Funciones para el selector de iconos
+    const materialIcons = [
+        // Finanzas y Dinero
+        'account_balance', 'attach_money', 'monetization_on', 'payment', 'account_balance_wallet', 
+        'savings', 'trending_up', 'trending_down', 'show_chart', 'multiline_chart', 'bar_chart',
+        'pie_chart', 'insert_chart', 'assessment', 'analytics', 'receipt', 'receipt_long',
+        'credit_card', 'card_membership', 'account_circle', 'wallet', 'currency_exchange',
+        'payments', 'price_check', 'price_change', 'calculate', 'point_of_sale',
+        'account_tree', 'money', 'euro', 'dollar', 'local_atm', 'atm', 'account_balance_bank',
+        
+        // Tecnología y Sistemas
+        'computer', 'laptop', 'devices', 'phone_android', 'tablet', 'memory', 'storage',
+        'cloud', 'cloud_upload', 'cloud_download', 'cloud_sync', 'data_usage', 'dns',
+        'router', 'wifi', 'signal_cellular_alt', 'network_check', 'settings', 'settings_applications',
+        'tune', 'build', 'code', 'terminal', 'bug_report', 'security', 'lock', 'vpn_key',
+        'admin_panel_settings', 'verified_user', 'shield', 'encrypted', 'key',
+        'developer_mode', 'integration_instructions', 'api', 'webhook', 'http',
+        
+        // Servidores y Infraestructura
+        'server', 'dns', 'router', 'network_node', 'hub', 'storage', 'database',
+        'cloud_queue', 'cloud_done', 'cloud_off', 'backup', 'restore', 'sync',
+        'server_environment', 'server_network', 'server_security', 'server_maintenance',
+        
+        // API y Conectividad
+        'api', 'webhook', 'http', 'link', 'link_off', 'hub', 'share', 'share_location',
+        'public', 'language', 'swap_horiz', 'swap_vert', 'sync', 'sync_alt', 'cached',
+        'refresh', 'autorenew', 'swap_calls', 'call_merge', 'call_split', 'call_made',
+        'call_received', 'integration_instructions', 'web', 'language', 'public',
+        
+        // Mercado de Capitales y Trading
+        'trending_up', 'trending_down', 'show_chart', 'candlestick_chart', 'stock',
+        'line_axis', 'scatter_plot', 'bubble_chart', 'area_chart', 'timeline',
+        'insights', 'query_stats', 'schema', 'corporate_fare', 'business', 'domain',
+        'apartment', 'store', 'storefront', 'trading', 'market', 'finance',
+        'trending_flat', 'show_chart', 'bar_chart', 'pie_chart', 'multiline_chart',
+        
+        // Bancos y Entidades Financieras
+        'account_balance', 'account_balance_bank', 'account_circle', 'business',
+        'corporate_fare', 'domain', 'apartment', 'store', 'storefront', 'bank',
+        'local_bank', 'account_tree', 'corporate_account', 'business_center',
+        'account_box', 'badge', 'verified', 'verified_user', 'security',
+        
+        // Documentos y Archivos
+        'description', 'article', 'text_snippet', 'note', 'note_add', 'note_alt',
+        'file_copy', 'file_download', 'file_upload', 'file_present', 'folder',
+        'folder_open', 'folder_shared', 'drive_file', 'insert_drive_file',
+        'picture_as_pdf', 'image', 'image_search', 'collections', 'library_books',
+        'menu_book', 'book', 'bookmark', 'bookmark_add', 'bookmark_border',
+        
+        // General y UI
+        'dashboard', 'home', 'star', 'favorite', 'settings', 'menu', 'more_vert',
+        'search', 'filter_list', 'sort', 'view_list', 'view_module', 'grid_view',
+        'list', 'table_chart', 'today', 'event', 'calendar_today', 'schedule',
+        'notifications', 'notifications_active', 'email', 'mail', 'send', 'inbox',
+        'person', 'group', 'people', 'person_add', 'help', 'info', 'question_answer',
+        'print', 'download', 'upload', 'get_app', 'save', 'check_circle', 'check',
+        'cancel', 'close', 'delete', 'edit', 'add', 'remove', 'update', 'refresh',
+        'zoom_in', 'zoom_out', 'fullscreen', 'open_in_new', 'launch'
+    ];
+    
+    function cargarMaterialIcons() {
+        const grid = document.getElementById('materialIconsGrid');
+        if (!grid) return;
+        
+        grid.innerHTML = '';
+        materialIcons.forEach(iconName => {
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'icon-item';
+            iconDiv.innerHTML = `<span class="material-icons">${iconName}</span>`;
+            iconDiv.title = iconName;
+            iconDiv.onclick = () => seleccionarMaterialIcon(iconName);
+            grid.appendChild(iconDiv);
+        });
+    }
+    
+    function filtrarIconos(busqueda) {
+        const grid = document.getElementById('materialIconsGrid');
+        if (!grid) return;
+        
+        const items = grid.querySelectorAll('.icon-item');
+        const searchLower = busqueda.toLowerCase();
+        
+        items.forEach(item => {
+            const iconName = item.title.toLowerCase();
+            if (iconName.includes(searchLower)) {
+                item.style.display = 'flex';
+                } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    
+    function toggleIconSelector() {
+        const selector = document.getElementById('iconSelector');
+        if (selector) {
+            const isVisible = selector.style.display === 'block';
+            selector.style.display = isVisible ? 'none' : 'block';
+            
+            // Cerrar al hacer clic fuera
+            if (!isVisible) {
+                setTimeout(() => {
+                    document.addEventListener('click', cerrarIconSelectorOnClickOutside);
+                }, 100);
+            }
+        }
+    }
+    
+    function cerrarIconSelectorOnClickOutside(event) {
+        const selector = document.getElementById('iconSelector');
+        const container = document.querySelector('.icon-selector-container');
+        
+        if (selector && container && !container.contains(event.target)) {
+            selector.style.display = 'none';
+            document.removeEventListener('click', cerrarIconSelectorOnClickOutside);
+        }
+    }
+    
+    function switchIconTab(tab) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.icon-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.querySelectorAll('.icon-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Mostrar el tab seleccionado
+        const tabContent = document.getElementById('iconTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+        const tabButtons = document.querySelectorAll('.icon-tab');
+        tabButtons.forEach(btn => {
+            if (btn.textContent.trim().toLowerCase().includes(tab.toLowerCase())) {
+                btn.classList.add('active');
+            }
+        });
+        if (tabContent) tabContent.classList.add('active');
+    }
+    
+    function seleccionarMaterialIcon(iconName) {
+        const iconValue = 'material-icons:' + iconName;
+        document.getElementById('icon').value = iconValue;
+        actualizarPreviewIcono(iconValue);
+        document.getElementById('iconSelector').style.display = 'none';
+    }
+    
+    function seleccionarEmoji(emoji) {
+        document.getElementById('icon').value = emoji;
+        actualizarPreviewIcono(emoji);
+        document.getElementById('iconSelector').style.display = 'none';
+    }
+    
+    function previewIconFile(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('iconFilePreview');
+                const previewImg = document.getElementById('iconFilePreviewImg');
+                if (preview && previewImg) {
+                    preview.style.display = 'block';
+                    previewImg.src = e.target.result;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    function aplicarIconoUrl() {
+        const urlInput = document.getElementById('iconUrlInput');
+        const fileInput = document.getElementById('iconFileInput');
+        
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                document.getElementById('icon').value = dataUrl;
+                actualizarPreviewIcono(dataUrl);
+                document.getElementById('iconSelector').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        } else if (urlInput && urlInput.value) {
+            document.getElementById('icon').value = urlInput.value;
+            actualizarPreviewIcono(urlInput.value);
+            document.getElementById('iconSelector').style.display = 'none';
+        }
+    }
+    
+    function actualizarPreviewIcono(iconValue) {
+        const preview = document.getElementById('iconPreview');
+        if (!preview) return;
+        
+        if (iconValue.startsWith('data:image')) {
+            preview.innerHTML = `<img src="${iconValue}" style="width: 48px; height: 48px; object-fit: contain;" alt="Icono">`;
+        } else if (iconValue.startsWith('material-icons:')) {
+            const iconName = iconValue.split(':')[1];
+            preview.innerHTML = `<span class="material-icons" style="font-size: 48px; color: var(--primary-color);">${iconName}</span>`;
+        } else if (iconValue.startsWith('http://') || iconValue.startsWith('https://')) {
+            preview.innerHTML = `<img src="${iconValue}" style="width: 48px; height: 48px; object-fit: contain;" alt="Icono" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'material-icons\\' style=\\'font-size: 48px; color: #9aa0a6;\\'>image</span>';">`;
+            } else {
+            preview.innerHTML = `<span style="font-size: 48px;">${iconValue}</span>`;
+        }
+    }
+
+    async function eliminarFuncionalidad(id) {
+        if (!confirm('¿Estás seguro de eliminar esta funcionalidad?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/funcionalidades/' + id, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                mostrarNotificacion('Funcionalidad eliminada correctamente', 'success');
+                setTimeout(() => {
+                    window.location.href = '/newsletter';
+                }, 1000);
+            } else {
+                mostrarNotificacion('Error: ' + result.error, 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarNotificacion('Error al eliminar la funcionalidad', 'error');
+        }
+    }
+    
+    // Sistema de notificaciones
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+        // Eliminar notificación anterior si existe
+        const notificacionExistente = document.querySelector('.toast-notification');
+        if (notificacionExistente) {
+            notificacionExistente.remove();
+        }
+        
+        // Crear notificación
+        const notificacion = document.createElement('div');
+        notificacion.className = `toast-notification toast-${tipo}`;
+        notificacion.innerHTML = `
+            <div class="toast-content">
+                <span class="toast-icon">
+                    ${tipo === 'success' ? '✓' : tipo === 'error' ? '✕' : 'ℹ'}
+                </span>
+                <span class="toast-message">${mensaje}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notificacion);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notificacion.classList.add('show');
+        }, 10);
+        
+        // Auto-eliminar después de 3 segundos (o 5 para errores)
+        const tiempo = tipo === 'error' ? 5000 : 3000;
+        setTimeout(() => {
+            notificacion.classList.remove('show');
+            setTimeout(() => {
+                if (notificacion.parentNode) {
+                    notificacion.parentNode.removeChild(notificacion);
+                }
+            }, 300);
+        }, tiempo);
+    }
+    <% } %>
+    </script>
+</body>
+</html>
 

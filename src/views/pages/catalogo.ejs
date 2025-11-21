@@ -97,34 +97,41 @@
                                 </div>
                                 <% } %>
                             </div>
-                            <p class="card-description"><%= func.description ? (func.description.length > 150 ? func.description.substring(0, 150) + '...' : func.description) : 'Sin descripción' %></p>
-                            <div class="card-meta">
-                                <span class="card-tag"><%= func.section %></span>
-                                <% 
-                                // Mostrar tags de ventajas esperadas (títulos)
-                                let ventajasTags = [];
-                                if (func.ventajas_esperadas) {
-                                    try {
-                                        if (typeof func.ventajas_esperadas === 'string') {
-                                            const parsed = JSON.parse(func.ventajas_esperadas || '[]');
-                                            ventajasTags = Array.isArray(parsed) ? parsed : [];
-                                        } else if (Array.isArray(func.ventajas_esperadas)) {
-                                            ventajasTags = func.ventajas_esperadas;
-                                        }
-                                    } catch (e) {
-                                        ventajasTags = [];
-                                    }
+                        <p class="card-description"><%= func.description ? (func.description.length > 150 ? func.description.substring(0, 150) + '...' : func.description) : 'Sin descripción' %></p>
+                        <div class="card-meta">
+                            <% if (func.section) { %>
+                            <span class="card-tag"><%= func.section %></span>
+                            <% } %>
+                        </div>
+                        <% 
+                        // Mostrar tags de ventajas esperadas (títulos) en renglón separado
+                        let ventajasTags = [];
+                        if (func.ventajas_esperadas) {
+                            try {
+                                if (typeof func.ventajas_esperadas === 'string') {
+                                    const parsed = JSON.parse(func.ventajas_esperadas || '[]');
+                                    ventajasTags = Array.isArray(parsed) ? parsed : [];
+                                } else if (Array.isArray(func.ventajas_esperadas)) {
+                                    ventajasTags = func.ventajas_esperadas;
                                 }
-                                ventajasTags.forEach(tag => {
-                                    const titulo = tag && (tag.titulo || tag.title || '');
-                                    if (titulo) {
-                                %>
-                                <span class="card-tag ventajas-tag"><%= titulo %></span>
-                                <% 
-                                    }
-                                }); 
-                                %>
-                            </div>
+                            } catch (e) {
+                                ventajasTags = [];
+                            }
+                        }
+                        if (ventajasTags.length > 0) {
+                        %>
+                        <div class="card-meta card-meta-ventajas">
+                            <% ventajasTags.forEach(tag => {
+                                const titulo = tag && (tag.titulo || tag.title || '');
+                                const visible = tag && tag.visible !== false;
+                                if (titulo && visible) {
+                            %>
+                            <span class="card-tag ventajas-tag"><%= titulo %></span>
+                            <% 
+                                }
+                            }); %>
+                        </div>
+                        <% } %>
                             <div class="card-more-info">
                                 <span class="more-info-text">Más información</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

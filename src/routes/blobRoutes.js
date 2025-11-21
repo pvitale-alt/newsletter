@@ -45,23 +45,24 @@ router.post('/api/upload-image', upload.single('image'), async (req, res) => {
         // ⚠️ LAZY LOADING: Importar @vercel/blob SOLO cuando realmente se necesita
         // Esto evita que se ejecute código al cargar el módulo
         console.log('[BLOB] Importando @vercel/blob ahora (lazy loading)...');
-        console.log('[BLOB] ⚠️ ADVERTENCIA: Si @vercel/blob tiene inicialización automática, podría ejecutar list() aquí');
         
-        // Interceptar cualquier llamada a list() o copy() que pueda ejecutarse automáticamente
-        const originalModule = require('@vercel/blob');
-        console.log('[BLOB] Módulo @vercel/blob cargado, verificando si tiene list() o copy()...');
+        // Importar el módulo
+        const blobModule = require('@vercel/blob');
+        console.log('[BLOB] Módulo @vercel/blob cargado');
         
-        // Verificar si el módulo tiene list() o copy() y si se ejecutan automáticamente
-        if (originalModule.list) {
-            console.log('[BLOB] ⚠️⚠️⚠️ PELIGRO: @vercel/blob tiene función list() disponible');
-            // NO ejecutar list() aquí, solo verificar que existe
+        // Verificar qué funciones están disponibles (sin ejecutarlas)
+        const availableFunctions = Object.keys(blobModule).filter(key => typeof blobModule[key] === 'function');
+        console.log('[BLOB] Funciones disponibles en @vercel/blob:', availableFunctions.join(', '));
+        
+        // Extraer solo put() - NO usar list() ni copy()
+        const { put } = blobModule;
+        
+        // Verificar si put() existe
+        if (!put) {
+            throw new Error('put() no está disponible en @vercel/blob');
         }
-        if (originalModule.copy) {
-            console.log('[BLOB] ⚠️⚠️⚠️ PELIGRO: @vercel/blob tiene función copy() disponible');
-        }
         
-        const { put } = originalModule;
-        console.log('[BLOB] @vercel/blob importado exitosamente - Solo se usará put()');
+        console.log('[BLOB] ✅ Solo se usará put() - NO se ejecutará list() ni copy()');
         
         // LOG: Registrar cada llamada a put() para monitorear Advanced Operations
         console.log('[BLOB] Iniciando upload de imagen - Advanced Operation #' + new Date().toISOString());
