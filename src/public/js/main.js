@@ -1,8 +1,18 @@
 // Funcionalidad del modal de suscripción
 function toggleSubscribeModal() {
     const modal = document.getElementById('subscribeModal');
+    const messageDiv = document.getElementById('subscribeMessage');
+    
     if (modal) {
-        modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+        const isOpening = modal.style.display === 'none';
+        modal.style.display = isOpening ? 'block' : 'none';
+        
+        // Si se está cerrando, ocultar y limpiar el mensaje
+        if (!isOpening && messageDiv) {
+            messageDiv.style.display = 'none';
+            messageDiv.textContent = '';
+            messageDiv.className = 'subscribe-message';
+        }
     }
 }
 
@@ -86,6 +96,13 @@ async function suscribirse(event) {
     const email = form.querySelector('#uni_subscribe_email').value;
     const name = form.querySelector('#subscribe_name').value;
     const bank_entity = form.querySelector('#subscribe_entity').value;
+    const messageDiv = document.getElementById('subscribeMessage');
+    
+    // Ocultar mensaje anterior
+    if (messageDiv) {
+        messageDiv.style.display = 'none';
+        messageDiv.className = 'subscribe-message';
+    }
     
     const data = {
         name: name,
@@ -105,15 +122,36 @@ async function suscribirse(event) {
         const result = await response.json();
         
         if (result.success) {
-            alert('¡Te has suscrito correctamente al newsletter!');
+            // Mostrar mensaje de éxito
+            if (messageDiv) {
+                messageDiv.textContent = '¡Te has suscrito correctamente al newsletter!';
+                messageDiv.className = 'subscribe-message subscribe-message-success';
+                messageDiv.style.display = 'block';
+            }
             form.reset();
-            toggleSubscribeModal();
+            // Cerrar modal después de 2 segundos
+            setTimeout(() => {
+                toggleSubscribeModal();
+                if (messageDiv) {
+                    messageDiv.style.display = 'none';
+                }
+            }, 2000);
         } else {
-            alert('Error: ' + result.error);
+            // Mostrar mensaje de error
+            if (messageDiv) {
+                messageDiv.textContent = 'Error: ' + result.error;
+                messageDiv.className = 'subscribe-message subscribe-message-error';
+                messageDiv.style.display = 'block';
+            }
         }
     } catch (error) {
         console.error('Error al suscribirse:', error);
-        alert('Error al procesar la suscripción. Por favor, intenta nuevamente.');
+        // Mostrar mensaje de error
+        if (messageDiv) {
+            messageDiv.textContent = 'Error al procesar la suscripción. Por favor, intenta nuevamente.';
+            messageDiv.className = 'subscribe-message subscribe-message-error';
+            messageDiv.style.display = 'block';
+        }
     }
 }
 

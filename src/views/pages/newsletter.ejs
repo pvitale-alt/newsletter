@@ -60,8 +60,24 @@
                     %>
                     <div class="card" onclick="<% if (typeof adminSession === 'undefined' || !adminSession) { %>window.location.href='/detalle/<%= encodeURIComponent(slug) %>'<% } %>">
                         <div class="card-header">
-                            <span class="card-tag disponible-tag">Disponible</span>
-                            <h3 class="card-title">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: 8px;">
+                                <span class="card-tag disponible-tag">Disponible</span>
+                                <% if (typeof adminSession !== 'undefined' && adminSession) { %>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="event.stopPropagation(); window.location.href='/detalle/<%= encodeURIComponent(slug) %>?edit=true'" class="btn" style="padding: 4px 8px; font-size: 12px;" title="Editar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                        </svg>
+                                    </button>
+                                    <button onclick="event.stopPropagation(); eliminarFuncionalidad('<%= func.id %>')" class="btn" style="padding: 4px 8px; font-size: 12px; background: #d93025; color: white;" title="Eliminar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <% } %>
+                            </div>
+                            <h3 class="card-title" style="width: 100%; margin-top: 0;">
                                 <% if (func.icon) { %>
                                     <% if (func.icon.startsWith('data:image')) { %>
                                     <img src="<%= func.icon %>" style="margin-right: 8px; width: 20px; height: 20px; vertical-align: middle; object-fit: contain;" alt="Icono">
@@ -74,20 +90,6 @@
                                 <% } %>
                                 <%= func.title %>
                             </h3>
-                            <% if (typeof adminSession !== 'undefined' && adminSession) { %>
-                            <div style="display: flex; gap: 8px;">
-                                <button onclick="event.stopPropagation(); window.location.href='/detalle/<%= encodeURIComponent(slug) %>?edit=true'" class="btn" style="padding: 4px 8px; font-size: 12px;" title="Editar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                                    </svg>
-                                </button>
-                                <button onclick="event.stopPropagation(); eliminarFuncionalidad('<%= func.id %>')" class="btn" style="padding: 4px 8px; font-size: 12px; background: #d93025; color: white;" title="Eliminar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <% } %>
                         </div>
                         <p class="card-description"><%= func.description ? (func.description.length > 150 ? func.description.substring(0, 150) + '...' : func.description) : 'Sin descripción' %></p>
                         <div class="card-meta">
