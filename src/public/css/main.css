@@ -953,29 +953,6 @@ h3 {
     color: var(--text-secondary);
 }
 
-/* Hero Title (ya no se usa home-hero, pero lo dejamos por si acaso) */
-.hero-title {
-    font-size: 72px;
-    font-weight: 400;
-    color: var(--text-primary);
-    margin-bottom: 16px;
-    text-transform: lowercase;
-}
-
-.hero-title::first-letter {
-    text-transform: uppercase;
-}
-
-.hero-subtitle {
-    font-size: 18px;
-    color: var(--text-secondary);
-}
-
-.home-sections {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 24px;
-}
 
 .section-card {
     background: white;

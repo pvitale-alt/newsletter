@@ -52,7 +52,6 @@ Newsletter/
 │       │   ├── header.ejs
 │       │   └── footer.ejs
 │       └── pages/
-│           ├── home.ejs
 │           ├── catalogo.ejs
 │           ├── newsletter.ejs
 │           ├── proximamente.ejs
