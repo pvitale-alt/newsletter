@@ -376,7 +376,15 @@
                             </ol>
                         </nav>
                         
-                        <div class="one-page-header">
+                        <div class="one-page-header" style="background-image: url('<% 
+                            if (funcionalidad && funcionalidad.type === 'proximamente') {
+                                %>/images/header-proximamente.svg<%
+                            } else if (funcionalidad && funcionalidad.type === 'catalogo') {
+                                %>/images/header-catalogo.svg<%
+                            } else {
+                                %>/images/Titulo Funcionalidad.svg<%
+                            }
+                        %>');">
                             <div class="one-page-header-content">
                                 <% if (funcionalidad && funcionalidad.icon) { %>
                                     <div class="one-page-header-icon">
@@ -412,7 +420,7 @@
                                                     style="margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap;">
                                                     <% if (typeof adminSession !=='undefined' && adminSession) { %>
                                                         <a href="<%= '/detalle/' + (funcionalidad && funcionalidad.slug ? funcionalidad.slug : 'nueva') + '?edit=true' %>"
-                                                            class="button"
+                                                            class="button button-white-on-blue"
                                                             style="text-decoration: none; display: inline-block;">Editar</a>
                                                         <% } %>
 
@@ -1149,10 +1157,24 @@
                             button.disabled = true;
                             button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="animation: spin 1s linear infinite;"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> Generando PDF...';
 
-                            // Agregar estilo temporal para ocultar backgrounds y elementos no deseados
+                            // Agregar estilo temporal solo para ocultar elementos no deseados
+                            // NO eliminar el background-image del header para que se capture en el PDF
                             const style = document.createElement('style');
                             style.id = 'pdf-temp-style';
-                            style.textContent = '.pdf-generating * { background-image: none !important; } .pdf-generating .no-print { display: none !important; }';
+                            const funcType = '<%= funcionalidad && funcionalidad.type ? funcionalidad.type : "" %>';
+                            let headerImage = '/images/Titulo Funcionalidad.svg';
+                            if (funcType === 'proximamente') {
+                                headerImage = '/images/header-proximamente.svg';
+                            } else if (funcType === 'catalogo') {
+                                headerImage = '/images/header-catalogo.svg';
+                            }
+                            style.textContent = `
+                                .pdf-generating .no-print { display: none !important; }
+                                /* Mantener el fondo del header para el PDF */
+                                .pdf-generating .one-page-header {
+                                    background-image: url('${headerImage}') !important;
+                                }
+                            `;
                             document.head.appendChild(style);
 
                             // Agregar clase al body
@@ -1180,7 +1202,13 @@
                                     scale: 2,
                                     useCORS: true,
                                     logging: false,
-                                    backgroundColor: '#ffffff'
+                                    backgroundColor: '#ffffff',
+                                    allowTaint: false,
+                                    removeContainer: true,
+                                    // Asegurar que se capturen los background-images
+                                    ignoreElements: function(element) {
+                                        return element.classList && element.classList.contains('no-print');
+                                    }
                                 },
                                 jsPDF: {
                                     unit: 'mm',
