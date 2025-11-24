@@ -339,39 +339,131 @@ h3 {
     color: var(--text-secondary);
 }
 
-/* Page Header Panel (con cover) */
+/* Page Header Panel (con cover) - Estilo creativo y minimalista */
 .page-header-panel {
     background: white;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 24px;
-    box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px 0 rgba(60,64,67,.12), 0 1px 3px 0 rgba(60,64,67,.08);
     position: relative;
-    padding: 24px 40px;
+    padding: 48px 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+}
+
+/* Elementos decorativos removidos - se definirán más adelante */
+
+/* Catálogo - Naranja */
+.page-header-panel.catalogo {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffffff 50%, #fff7ed 100%);
+}
+
+
+.page-header-panel.catalogo .page-header-icon {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.15);
+}
+
+/* Newsletter - Azul */
+.page-header-panel.newsletter {
+    background: linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%);
+}
+
+
+.page-header-panel.newsletter .page-header-icon {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(49, 107, 161, 0.15);
+}
+
+/* Próximamente - Verde */
+.page-header-panel.proximamente {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #f0fdf4 100%);
+}
+
+
+.page-header-panel.proximamente .page-header-icon {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
 }
 
 .page-header-panel .page-header {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     flex-direction: column;
     text-align: center;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mejorar el subtítulo */
+.page-header-panel .page-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
 }
 
 .page-header-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.8;
     flex-shrink: 0;
     margin: 0 auto;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.page-header-icon svg {
+.page-header-icon:hover {
+    transform: translateY(-2px);
+}
+
+.page-header-icon svg,
+.page-header-icon i {
     width: 48px;
     height: 48px;
+    transition: transform 0.3s ease;
+}
+
+.page-header-icon:hover svg,
+.page-header-icon:hover i {
+    transform: scale(1.1);
+}
+
+/* Colores específicos para los íconos */
+.page-header-panel.catalogo .page-header-icon svg,
+.page-header-panel.catalogo .page-header-icon i {
+    color: #d97706;
+}
+
+.page-header-panel.newsletter .page-header-icon svg,
+.page-header-panel.newsletter .page-header-icon i {
+    color: var(--primary-color, #316ba1);
+}
+
+.page-header-panel.proximamente .page-header-icon svg,
+.page-header-panel.proximamente .page-header-icon i {
+    color: #16a34a;
 }
 
 .page-header-image {
@@ -697,6 +789,22 @@ h3 {
     display: flex;
     flex-direction: column;
     position: relative;
+}
+
+/* Fondos difuminados para tarjetas según la sección */
+/* Catálogo - fondo naranja suave con más transparencia */
+body.page-catalogo .card {
+    background: rgba(255, 247, 237, 0.3);
+}
+
+/* Newsletter - fondo azul suave con más transparencia */
+body.page-newsletter .card {
+    background: rgba(239, 246, 255, 0.5);
+}
+
+/* Próximamente - fondo verde suave con más transparencia */
+body.page-proximamente .card {
+    background: rgba(240, 253, 244, 0.3);
 }
 
 .card:hover {
