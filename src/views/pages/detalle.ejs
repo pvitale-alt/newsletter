@@ -7,6 +7,30 @@
     <title>
         <%= funcionalidad && funcionalidad.title ? funcionalidad.title : 'Nueva Funcionalidad' %> - Newsletter Unitrade
     </title>
+    
+    <% 
+    // Determinar qué imagen de header se necesita para precargarla con prioridad alta
+    let headerImageToPreload = '/images/Titulo Funcionalidad.svg';
+    if (funcionalidad && funcionalidad.type === 'proximamente') {
+        headerImageToPreload = '/images/header-proximamente.svg';
+    } else if (funcionalidad && funcionalidad.type === 'catalogo') {
+        headerImageToPreload = '/images/header-catalogo.svg';
+    }
+    %>
+    
+    <!-- Precarga de imágenes de header para mejorar rendimiento -->
+    <link rel="preload" href="<%= headerImageToPreload %>" as="image" fetchpriority="high">
+    <!-- Precarga de otras imágenes de header (por si cambia el tipo) -->
+    <% if (headerImageToPreload !== '/images/Titulo Funcionalidad.svg') { %>
+    <link rel="preload" href="/images/Titulo Funcionalidad.svg" as="image">
+    <% } %>
+    <% if (headerImageToPreload !== '/images/header-proximamente.svg') { %>
+    <link rel="preload" href="/images/header-proximamente.svg" as="image">
+    <% } %>
+    <% if (headerImageToPreload !== '/images/header-catalogo.svg') { %>
+    <link rel="preload" href="/images/header-catalogo.svg" as="image">
+    <% } %>
+    
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
