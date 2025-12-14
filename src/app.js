@@ -10,6 +10,12 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Ruta explícita para favicon (algunos navegadores lo buscan directamente)
+app.get('/favicon.ico', (req, res) => {
+    res.type('image/x-icon');
+    res.sendFile(path.join(__dirname, 'public', 'images', 'logo.ico'));
+});
+
 // Middleware para archivos estáticos con caché optimizado
 app.use(express.static(path.join(__dirname, 'public'), {
     maxAge: 31536000000, // 1 año en milisegundos
