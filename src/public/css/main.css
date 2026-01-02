@@ -300,9 +300,49 @@ h3 {
 }
 
 .page-container {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
     padding: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Responsive page-container - optimizado para 3 tarjetas en 14" y 4 en 24" */
+@media (max-width: 480px) {
+    .page-container {
+        max-width: 100%;
+        padding: 16px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .page-container {
+        max-width: 100%;
+        padding: 24px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .page-container {
+        max-width: 100%;
+        padding: 32px;
+    }
+}
+
+/* Pantallas de 14" (hasta 1920px) - 3 tarjetas */
+@media (min-width: 1025px) and (max-width: 1919px) {
+    .page-container {
+        max-width: 1300px;
+        padding: 40px;
+    }
+}
+
+/* Monitores de 24" (1920px+) - 4 tarjetas */
+@media (min-width: 1920px) {
+    .page-container {
+        max-width: 1500px;
+        padding: 40px;
+    }
 }
 
 .page-header {
@@ -777,6 +817,51 @@ h3 {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+}
+
+/* Responsive cards - adaptación según tamaño de pantalla */
+@media (max-width: 480px) {
+    .cards-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 640px) {
+    .cards-view {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+    .cards-view {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .cards-view {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+    }
+}
+
+/* Pantallas de 14" (1025px - 1919px) - 3 tarjetas */
+@media (min-width: 1025px) and (max-width: 1919px) {
+    .cards-view {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
+/* Monitores de 24" (1920px+) - 4 tarjetas */
+@media (min-width: 1920px) {
+    .cards-view {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
 }
 
 .card {
@@ -1671,19 +1756,6 @@ body.page-proximamente .card {
     content: '✉';
     font-size: 16px;
     opacity: 0.7;
-}
-    text-decoration: none;
-    font-size: 15px;
-    transition: all 0.2s;
-    font-family: 'Roboto', sans-serif;
-    padding: 4px 8px;
-    border-radius: 4px;
-}
-
-.contact-link:hover {
-    color: #1557b0;
-    background: rgba(26, 115, 232, 0.1);
-    text-decoration: none;
 }
 
 .one-page-actions {
@@ -2656,6 +2728,7 @@ body.page-proximamente .card {
     
     .cards-view {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
     
     .icon-grid,
