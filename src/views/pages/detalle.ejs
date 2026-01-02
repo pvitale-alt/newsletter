@@ -1171,6 +1171,74 @@
                         // Función para descargar PDF
                         // Función para descargar PDF
                         // Función para descargar PDF
+                        // Función auxiliar para cargar imágenes y convertirlas a base64
+                        function loadImageAsBase64(img) {
+                            return new Promise((resolve, reject) => {
+                                if (img.complete && img.naturalHeight !== 0) {
+                                    // La imagen ya está cargada
+                                    const canvas = document.createElement('canvas');
+                                    const ctx = canvas.getContext('2d');
+                                    canvas.width = img.naturalWidth;
+                                    canvas.height = img.naturalHeight;
+                                    ctx.drawImage(img, 0, 0);
+                                    try {
+                                        const dataURL = canvas.toDataURL('image/png');
+                                        img.setAttribute('data-src', img.src);
+                                        img.src = dataURL;
+                                        resolve();
+                                    } catch (e) {
+                                        // Si falla la conversión, continuar con la imagen original
+                                        resolve();
+                                    }
+                                } else {
+                                    // Esperar a que la imagen se cargue
+                                    const tempImg = new Image();
+                                    tempImg.crossOrigin = 'anonymous';
+                                    tempImg.onload = function() {
+                                        const canvas = document.createElement('canvas');
+                                        const ctx = canvas.getContext('2d');
+                                        canvas.width = tempImg.width;
+                                        canvas.height = tempImg.height;
+                                        ctx.drawImage(tempImg, 0, 0);
+                                        try {
+                                            const dataURL = canvas.toDataURL('image/png');
+                                            img.setAttribute('data-src', img.src);
+                                            img.src = dataURL;
+                                            resolve();
+                                        } catch (e) {
+                                            // Si falla la conversión, continuar con la imagen original
+                                            resolve();
+                                        }
+                                    };
+                                    tempImg.onerror = function() {
+                                        // Si falla la carga, continuar sin convertir
+                                        resolve();
+                                    };
+                                    tempImg.src = img.src;
+                                }
+                            });
+                        }
+
+                        // Función para esperar a que todas las imágenes se carguen
+                        async function waitForImages(element) {
+                            const images = element.querySelectorAll('img');
+                            const imagePromises = Array.from(images).map(img => {
+                                return new Promise((resolve) => {
+                                    if (img.complete) {
+                                        resolve();
+                                    } else {
+                                        img.onload = resolve;
+                                        img.onerror = resolve;
+                                        // Timeout de seguridad
+                                        setTimeout(resolve, 5000);
+                                    }
+                                });
+                            });
+                            await Promise.all(imagePromises);
+                            // Esperar un poco más para asegurar que todo esté renderizado
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+
                         function descargarPDF() {
                             // Obtener el botón del header
                             const button = document.getElementById('header-pdf-btn');
@@ -1209,58 +1277,103 @@
                             const funcTitle = '<%= funcionalidad && funcionalidad.title ? funcionalidad.title : "funcionalidad" %>';
                             const filename = funcTitle.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-') + '.pdf';
 
-                            // Calcular dimensiones exactas del contenido visible
-                            // 1 px = 0.264583 mm
-                            const rect = element.getBoundingClientRect();
-                            const contentWidthMm = rect.width * 0.264583;
-                            const contentHeightMm = rect.height * 0.264583;
+                            // Función para generar el PDF después de cargar las imágenes
+                            async function generarPDF() {
+                                try {
+                                    // Esperar a que todas las imágenes se carguen
+                                    await waitForImages(element);
 
-                            // Agregamos un pequeño margen de seguridad
-                            const pdfWidth = contentWidthMm + 2;
-                            const pdfHeight = contentHeightMm + 2;
+                                    // Scroll al inicio para asegurar que se capture desde el principio
+                                    const scrollY = window.scrollY;
+                                    window.scrollTo(0, 0);
+                                    
+                                    // Esperar un momento para que el scroll se complete
+                                    await new Promise(resolve => setTimeout(resolve, 100));
 
-                            const opt = {
-                                margin: 0,
-                                filename: filename,
-                                image: { type: 'jpeg', quality: 0.98 },
-                                html2canvas: {
-                                    scale: 2,
-                                    useCORS: true,
-                                    logging: false,
-                                    backgroundColor: '#ffffff',
-                                    allowTaint: false,
-                                    removeContainer: true,
-                                    // Asegurar que se capturen los background-images
-                                    ignoreElements: function(element) {
-                                        return element.classList && element.classList.contains('no-print');
-                                    }
-                                },
-                                jsPDF: {
-                                    unit: 'mm',
-                                    format: [pdfWidth, pdfHeight],
-                                    orientation: 'portrait',
-                                    compress: true
-                                },
-                                pagebreak: { mode: 'avoid-all' }
-                            };
+                                    // Calcular dimensiones exactas del contenido usando scrollHeight/scrollWidth
+                                    // que incluye todo el contenido, no solo lo visible
+                                    // 1 px = 0.264583 mm
+                                    const contentWidthMm = element.scrollWidth * 0.264583;
+                                    const contentHeightMm = element.scrollHeight * 0.264583;
 
-                            html2pdf().set(opt).from(element).save().then(function () {
-                                // Limpiar éxito
-                                document.body.classList.remove('pdf-generating');
-                                const tempStyle = document.getElementById('pdf-temp-style');
-                                if (tempStyle) tempStyle.remove();
-                                button.disabled = false;
-                                button.innerHTML = originalText;
-                            }).catch(function (error) {
-                                console.error('Error al generar PDF:', error);
-                                // Limpiar error
-                                document.body.classList.remove('pdf-generating');
-                                const tempStyle = document.getElementById('pdf-temp-style');
-                                if (tempStyle) tempStyle.remove();
-                                button.disabled = false;
-                                button.innerHTML = originalText;
-                                alert('Error al generar el PDF. Por favor, intenta nuevamente.');
-                            });
+                                    // Usar las dimensiones exactas sin agregar margen extra
+                                    const pdfWidth = Math.max(contentWidthMm, 210); // Mínimo A4 width
+                                    const pdfHeight = Math.max(contentHeightMm, 297); // Mínimo A4 height
+
+                                    const opt = {
+                                        margin: [0, 0, 0, 0],
+                                        filename: filename,
+                                        image: { type: 'jpeg', quality: 0.98 },
+                                        html2canvas: {
+                                            scale: 2,
+                                            useCORS: true,
+                                            logging: false,
+                                            backgroundColor: '#ffffff',
+                                            allowTaint: true,
+                                            removeContainer: true,
+                                            scrollX: 0,
+                                            scrollY: 0,
+                                            windowWidth: element.scrollWidth,
+                                            windowHeight: element.scrollHeight,
+                                            x: 0,
+                                            y: 0,
+                                            width: element.scrollWidth,
+                                            height: element.scrollHeight,
+                                            onclone: function(clonedDoc, element) {
+                                                // Asegurar que las imágenes se muestren en el clon
+                                                const clonedImages = clonedDoc.querySelectorAll('img');
+                                                clonedImages.forEach(clonedImg => {
+                                                    clonedImg.style.display = 'block';
+                                                    clonedImg.style.visibility = 'visible';
+                                                    clonedImg.style.opacity = '1';
+                                                });
+                                                
+                                                // Asegurar que el contenedor clonado no tenga espacios extra
+                                                const clonedContainer = clonedDoc.querySelector('.one-page-container');
+                                                if (clonedContainer) {
+                                                    clonedContainer.style.margin = '0';
+                                                    clonedContainer.style.paddingTop = '0';
+                                                }
+                                            },
+                                            // Asegurar que se capturen los background-images
+                                            ignoreElements: function(element) {
+                                                return element.classList && element.classList.contains('no-print');
+                                            }
+                                        },
+                                        jsPDF: {
+                                            unit: 'mm',
+                                            format: [pdfWidth, pdfHeight],
+                                            orientation: 'portrait',
+                                            compress: true
+                                        },
+                                        pagebreak: { mode: 'avoid-all' }
+                                    };
+
+                                    await html2pdf().set(opt).from(element).save();
+                                    
+                                    // Restaurar scroll original
+                                    window.scrollTo(0, scrollY);
+
+                                    // Limpiar éxito
+                                    document.body.classList.remove('pdf-generating');
+                                    const tempStyle = document.getElementById('pdf-temp-style');
+                                    if (tempStyle) tempStyle.remove();
+                                    button.disabled = false;
+                                    button.innerHTML = originalText;
+                                } catch (error) {
+                                    console.error('Error al generar PDF:', error);
+                                    // Limpiar error
+                                    document.body.classList.remove('pdf-generating');
+                                    const tempStyle = document.getElementById('pdf-temp-style');
+                                    if (tempStyle) tempStyle.remove();
+                                    button.disabled = false;
+                                    button.innerHTML = originalText;
+                                    alert('Error al generar el PDF. Por favor, intenta nuevamente.');
+                                }
+                            }
+
+                            // Iniciar la generación del PDF
+                            generarPDF();
                         }
                         <% } %>
                 </script>
