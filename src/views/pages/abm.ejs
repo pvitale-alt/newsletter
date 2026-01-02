@@ -429,11 +429,40 @@
         }
     }
     
-    function eliminarAlcanceSectionImage() {
+    async function eliminarAlcanceSectionImage() {
         const previewDiv = document.getElementById('alcanceSectionImagePreview');
         const previewImg = document.getElementById('alcanceSectionImagePreviewImg');
         const hiddenInput = document.getElementById('alcanceSectionImageData');
         const fileInput = document.getElementById('alcanceSectionImage');
+        
+        // Obtener la URL de la imagen actual (si existe)
+        const currentImageUrl = hiddenInput ? hiddenInput.value : '';
+        
+        // Si hay una imagen en blob storage (URL de Vercel), eliminarla
+        if (currentImageUrl && (currentImageUrl.includes('blob.vercel-storage.com') || currentImageUrl.includes('public.blob.vercel-storage.com'))) {
+            try {
+                console.log('[BLOB] Eliminando imagen del blob storage:', currentImageUrl);
+                const deleteResponse = await fetch('/api/delete-image', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: currentImageUrl })
+                });
+                
+                const deleteResult = await deleteResponse.json();
+                if (deleteResult.success) {
+                    console.log('[BLOB] ✅ Imagen eliminada del blob storage');
+                } else {
+                    console.warn('[BLOB] ⚠️ No se pudo eliminar del blob storage:', deleteResult.error);
+                }
+            } catch (error) {
+                console.error('[BLOB] ❌ Error al eliminar del blob storage:', error);
+                // Continuar con la eliminación local aunque falle la eliminación del blob
+            }
+        }
+        
+        // Eliminar del formulario
         if (previewDiv) previewDiv.style.display = 'none';
         if (previewImg) previewImg.src = '';
         if (hiddenInput) hiddenInput.value = '';

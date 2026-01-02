@@ -156,19 +156,67 @@ router.delete('/api/delete-image', async (req, res) => {
             });
         }
 
-        // Vercel Blob no tiene una API directa para eliminar en el SDK actual
-        // Las imágenes se eliminan automáticamente después de cierto tiempo de inactividad
-        // O puedes usar la API REST de Vercel directamente si es necesario
+        // Verificar si Blob está deshabilitado
+        if (process.env.BLOB_DISABLED === 'true' || !process.env.BLOB_READ_WRITE_TOKEN) {
+            console.log('[BLOB] ⚠️ Blob deshabilitado - NO se ejecutará la eliminación');
+            return res.status(503).json({
+                success: false,
+                error: 'El almacenamiento de imágenes está deshabilitado',
+                blobDisabled: true
+            });
+        }
+
+        // Verificar que la URL sea de Vercel Blob
+        if (!url.includes('blob.vercel-storage.com') && !url.includes('public.blob.vercel-storage.com')) {
+            console.log('[BLOB] ⚠️ URL no es de Vercel Blob:', url);
+            return res.status(400).json({
+                success: false,
+                error: 'La URL proporcionada no es de Vercel Blob'
+            });
+        }
+
+        console.log('[BLOB] ⚠️⚠️⚠️ INICIANDO DELETE - Eliminando imagen:', url);
+
+        // ⚠️ LAZY LOADING: Importar @vercel/blob SOLO cuando realmente se necesita
+        console.log('[BLOB] Importando @vercel/blob para eliminación (lazy loading)...');
         
+        // Importar el módulo
+        const blobModule = require('@vercel/blob');
+        console.log('[BLOB] Módulo @vercel/blob cargado para eliminación');
+
+        // Extraer el pathname del blob de la URL
+        // Ejemplo: https://6di1upxadjr0cxuh.public.blob.vercel-storage.com/alcance-1767376787833-kbtho1dry4.png
+        // Necesitamos extraer: alcance-1767376787833-kbtho1dry4.png
+        const urlObj = new URL(url);
+        const blobPathname = urlObj.pathname.substring(1); // Remover el '/' inicial
+
+        console.log('[BLOB] Pathname del blob a eliminar:', blobPathname);
+
+        // Usar la función del() del SDK de @vercel/blob
+        // ⚠️ ESTA ES UNA ADVANCED OPERATION - se cuenta en el límite mensual
+        const { del } = blobModule;
+        
+        if (!del) {
+            throw new Error('del() no está disponible en @vercel/blob');
+        }
+
+        console.log('[BLOB] Ejecutando del() - Advanced Operation #' + new Date().toISOString());
+        
+        // Eliminar el blob usando el SDK
+        await del(blobPathname, {
+            token: process.env.BLOB_READ_WRITE_TOKEN
+        });
+
+        console.log('[BLOB] ✅ Imagen eliminada exitosamente del blob storage:', url);
         res.json({
             success: true,
-            message: 'La imagen será eliminada automáticamente por Vercel Blob'
+            message: 'Imagen eliminada correctamente del blob storage'
         });
     } catch (error) {
-        console.error('Error al eliminar imagen:', error);
+        console.error('[BLOB] ❌ Error al eliminar imagen:', error);
         res.status(500).json({
             success: false,
-            error: 'Error al procesar la eliminación'
+            error: 'Error al eliminar la imagen: ' + (error.message || 'Error desconocido')
         });
     }
 });
